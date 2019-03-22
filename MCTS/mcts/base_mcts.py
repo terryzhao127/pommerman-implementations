@@ -6,7 +6,8 @@ import random
 class MCTS:
     _default_exploration_constant = 1 / math.sqrt(2)
 
-    def __init__(self, time_limit=None, iteration_limit=None, exploration_constant=_default_exploration_constant,
+    def __init__(self, initial_state, time_limit=None, iteration_limit=None,
+                 exploration_constant=_default_exploration_constant,
                  rollout_policy=None, two_players=False):
         if time_limit is not None:
             if iteration_limit is not None:
@@ -34,9 +35,10 @@ class MCTS:
         self._rollout_policy = rollout_policy if rollout_policy is not None else MCTS._random_policy
         self._root = None
         self._two_players = two_players
+        self._initial_state = initial_state
 
-    def search(self, initial_state):
-        self._root = _Node(initial_state, None)
+    def search(self):
+        self._root = _Node(self._initial_state, None)
 
         if self._limit_type == 'time':
             time_limit = time.time() + self.time_limit / 1000
@@ -59,17 +61,28 @@ class MCTS:
             if node.is_fully_expanded:
                 node = MCTS._get_best_child(node, self._exploration_constant)
             else:
-                return MCTS._expand(node)
+                return self._expand(node)
         return node
 
-    @staticmethod
-    def _backpropogate(node, reward):
+    def _backpropogate(self, node, reward):
         while node is not None:
             node.num_visits += 1
             node.total_reward += reward
             node = node.parent
 
-            reward = -reward
+            reward = -reward if self._two_players else reward
+
+    @staticmethod
+    def _expand(node):
+        actions = node.state.get_possible_actions()
+        for action in actions:
+            if action not in node.children.keys():
+                new_node = _Node(node.state.take_action(action), node)
+
+                node.children[action] = new_node
+                if len(actions) == len(node.children):
+                    node.is_fully_expanded = True
+                return new_node
 
     @staticmethod
     def _get_best_child(node, exploration_value):
@@ -95,17 +108,6 @@ class MCTS:
         for action, node in parent.children.items():
             if node is child:
                 return action
-
-    @staticmethod
-    def _expand(node):
-        actions = node.state.get_possible_actions()
-        for action in actions:
-            if action not in node.children.keys():
-                new_node = _Node(node.state.take_action(action), node)
-                node.children[action] = new_node
-                if len(actions) == len(node.children):
-                    node.is_fully_expanded = True
-                return new_node
 
     @staticmethod
     def _random_policy(node):
