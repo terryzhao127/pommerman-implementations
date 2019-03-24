@@ -20,8 +20,6 @@ class IterativeMCTS(MCTS):
         best_child = MCTS._get_best_child(self._root, 0)
         action = MCTS._get_action(self._root, best_child)
 
-        self.update(action)
-
         return action
 
     def update(self, action):

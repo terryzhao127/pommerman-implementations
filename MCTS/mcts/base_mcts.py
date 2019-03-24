@@ -7,8 +7,7 @@ class MCTS:
     _default_exploration_constant = 1 / math.sqrt(2)
 
     def __init__(self, initial_state, time_limit=None, iteration_limit=None,
-                 exploration_constant=_default_exploration_constant,
-                 rollout_policy=None, two_players=False):
+                 exploration_constant=_default_exploration_constant, two_players=False):
         if time_limit is not None:
             if iteration_limit is not None:
                 raise _DuplicateLimitError
@@ -32,7 +31,6 @@ class MCTS:
             self._search_limit = iteration_limit
             self._limit_type = 'iterations'
         self._exploration_constant = exploration_constant
-        self._rollout_policy = rollout_policy if rollout_policy is not None else MCTS._random_policy
         self._root = None
         self._two_players = two_players
         self._initial_state = initial_state
@@ -53,11 +51,11 @@ class MCTS:
 
     def _execute(self):
         node = self._tree_policy(self._root)
-        reward = self._rollout_policy(node)
+        reward = node.state.rollout()
         self._backpropogate(node, reward)
 
     def _tree_policy(self, node):
-        while not node.is_terminal:
+        while not node.state.is_terminal():
             if node.is_fully_expanded:
                 node = MCTS._get_best_child(node, self._exploration_constant)
             else:
@@ -109,20 +107,63 @@ class MCTS:
             if node is child:
                 return action
 
-    @staticmethod
-    def _random_policy(node):
-        state = node.state
-        while not state.is_terminal():
-            action = random.choice(state.get_possible_actions())
-            state = state.take_action(action)
-        return state.get_reward() if state.winner() == node.parent.state.current_player else -state.get_reward()
+
+class State:
+    """
+    You should implement this abstract class for your custom State to use MCTS.
+    """
+
+    def get_possible_actions(self):
+        """
+        Get possible actions for current player to act.
+        :return: List of actions
+        """
+        raise NotImplementedError
+
+    def take_action(self, action):
+        """
+        Take an action of current player and return a new state.
+        :param action: An action of current player
+        :return: The new state
+        """
+        raise NotImplementedError
+
+    def is_terminal(self):
+        """
+        Check whether current state is the terminal state.
+        :return: A bool value
+        """
+        raise NotImplementedError
+
+    def get_reward(self):
+        """
+        Get the reward of current state for player who leads to this state.
+        :return: A number
+        """
+        raise NotImplementedError
+
+    def rollout(self):
+        """
+        Get the reward of rollout from current state for player who leads to this state.
+        :return: A number
+        """
+        raise NotImplementedError
+
+
+class Action:
+    """
+    You should implement this abstract class for your custom Action to use MCTS.
+    Or your objects of action are HASHABLE.
+    """
+
+    def __hash__(self):
+        raise NotImplementedError
 
 
 class _Node:
     def __init__(self, state, parent):
         self.state = state
-        self.is_terminal = state.is_terminal()
-        self.is_fully_expanded = self.is_terminal
+        self.is_fully_expanded = False
         self.children = {}
 
         # Information for last player to decide
