@@ -1,4 +1,5 @@
 import pommerman
+import copy
 from pommerman import agents
 from mcts_agent import MCTSAgent
 from multiprocessing import Process, Manager
@@ -18,7 +19,7 @@ def run(match_num, iteration_limit, mcts_process_num, result_list=None, process_
     if mcts_process_num == 1:
         mcts_process_num = None
     agent_list = [
-        MCTSAgent([agents.SimpleAgent for _ in range(3)], iteration_limit, process_count=mcts_process_num),
+        MCTSAgent([agents.SimpleAgent for _ in range(1)], iteration_limit, process_count=mcts_process_num),
         agents.SimpleAgent(),
         agents.SimpleAgent(),
         agents.SimpleAgent(),
@@ -43,21 +44,25 @@ def run(match_num, iteration_limit, mcts_process_num, result_list=None, process_
                 if agent not in survivors and agent not in dead_agents:
                     dead_agents.append(agent)
 
-        if process_id:
+        if process_id is not None:
             print('[Process %d, Episode %d] Dead order: ' % (process_id, i_episode),
                   str(dead_agents), 'Survivors:', survivors)
         else:
             print('[Episode %d] Dead order: ' % i_episode, str(dead_agents), 'Survivors:', survivors)
-        if result_list:
-            result_list.append((dead_agents, survivors))
+
+        if result_list is None:
+            result_list = []
+        result_list.append((dead_agents, survivors))
 
     if render:
         env.close()
 
+    return result_list
+
 
 def multiprocessing_run(process_count, match_num, iteration_limit, mcts_process_num):
     """
-
+    Run the match for MCTS and three simple agents multiprocessing.
     :param process_count: The number of processes
     :param match_num: The number of matches
     :param iteration_limit: The maximal iteration of MCTS
@@ -67,8 +72,8 @@ def multiprocessing_run(process_count, match_num, iteration_limit, mcts_process_
     with Manager() as manager:
         shared_list = manager.list()
 
-        processes = [Process(target=run, args=(iteration_limit, match_num, mcts_process_num, shared_list, i)) for i in
-                     range(process_count)]
+        processes = [Process(target=run, args=(iteration_limit, match_num, mcts_process_num, shared_list, i))
+                     for i in range(process_count)]
 
         for p in processes:
             p.start()
@@ -76,31 +81,36 @@ def multiprocessing_run(process_count, match_num, iteration_limit, mcts_process_
         for p in processes:
             p.join()
 
-        # Analysis
-        print('\n')
-        print('=' * 20, '\n')
+        return [i for i in shared_list]
 
-        mcts_agent = 10
-        count = 0
-        win_count = 0
-        rank_count = {i: 0 for i in range(1, 5)}
-        for result in shared_list:
-            count += 1
 
-            dead_order = result[0]
-            survivor = result[1]
-            if mcts_agent in survivor:
-                rank_count[1] += 1
-                win_count += 1
-            else:
-                for i in range(len(dead_order)):
-                    if dead_order[i] == mcts_agent:
-                        rank_count[4 - i] += 1
-        print('Match count:', count)
-        print('Win count:', win_count)
-        print('Average rank:', sum(k * v for k, v in rank_count.items()) / count)
+def analysis(l):
+    # Analysis
+    print('\n')
+    print('=' * 20, '\n')
+
+    mcts_agent = 10
+    count = 0
+    win_count = 0
+    rank_count = {i: 0 for i in range(1, 5)}
+    for result in l:
+        count += 1
+
+        dead_order = result[0]
+        survivor = result[1]
+        if mcts_agent in survivor:
+            rank_count[1] += 1
+            win_count += 1
+        else:
+            for i in range(len(dead_order)):
+                if dead_order[i] == mcts_agent:
+                    rank_count[4 - i] += 1
+    print('Match count:', count)
+    print('Win count:', win_count)
+    print('Average rank:', sum(k * v for k, v in rank_count.items()) / count)
 
 
 if __name__ == '__main__':
-    # run(match_num=20, iteration_limit=10, mcts_process_num=20, render=True)
-    multiprocessing_run(process_count=10, match_num=20, iteration_limit=10, mcts_process_num=10)
+    # result_list = run(match_num=20, iteration_limit=7, mcts_process_num=10, render=True)
+    result_list = multiprocessing_run(process_count=10, match_num=20, iteration_limit=7, mcts_process_num=10)
+    analysis(result_list)
