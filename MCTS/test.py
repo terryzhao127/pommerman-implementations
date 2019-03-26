@@ -108,7 +108,11 @@ def analysis(l):
     print('Average rank:', sum(k * v for k, v in rank_count.items()) / count)
 
 
+def main():
+    results = run(match_num=20, iteration_limit=7, mcts_process_num=10, render=True)
+    # results = multiprocessing_run(process_count=10, match_num=20, iteration_limit=7, mcts_process_num=10)
+    analysis(results)
+
+
 if __name__ == '__main__':
-    # result_list = run(match_num=20, iteration_limit=7, mcts_process_num=10, render=True)
-    result_list = multiprocessing_run(process_count=10, match_num=20, iteration_limit=7, mcts_process_num=10)
-    analysis(result_list)
+    main()
