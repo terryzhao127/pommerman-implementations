@@ -3,5 +3,7 @@
 ```
 git clone --recurse-submodules git@github.com:guikarist/pommerman-implementations.git
 
-conda create -n env.yml
+cd pommerman-implementations
+
+conda env create -f env.yml
 ```
