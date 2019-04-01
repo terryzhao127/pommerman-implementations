@@ -53,8 +53,7 @@ def run(match_num, iteration_limit, mcts_process_num, result_list=None, process_
             result_list = []
         result_list.append((dead_agents, survivors))
 
-    if render:
-        env.close()
+    env.close()
 
     return result_list
 
