@@ -1,0 +1,10 @@
+2019-04-01 16:00:34,329:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2019-04-01 16:00:34,331:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2019-04-01 16:00:34,333:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2019-04-01 16:00:34,335:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2019-04-01 16:00:34,337:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2019-04-01 16:00:34,338:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2019-04-01 16:00:34,340:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2019-04-01 16:00:34,341:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2019-04-01 16:00:36,898:INFO: Evaluating...
+2019-04-01 16:01:26,028:INFO: Average reward: -20.88 +/- 0.05
