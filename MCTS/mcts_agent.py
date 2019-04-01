@@ -14,6 +14,7 @@ class MCTSAgent(BaseAgent):
     def __init__(self, opponent_types, iteration_limit, process_count=None):
         """
         Initialize a MCTSAgent.
+
         :param opponent_types: Types of opponents. These opponents MUST be able to be simulated.
         :param iteration_limit: The maximal iteration of MCTS
         """

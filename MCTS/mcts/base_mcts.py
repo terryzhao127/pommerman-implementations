@@ -116,6 +116,7 @@ class State:
     def get_possible_actions(self):
         """
         Get possible actions for current player to act.
+
         :return: List of actions
         """
         raise NotImplementedError
@@ -123,6 +124,7 @@ class State:
     def take_action(self, action):
         """
         Take an action of current player and return a new state.
+
         :param action: An action of current player
         :return: The new state
         """
@@ -131,6 +133,7 @@ class State:
     def is_terminal(self):
         """
         Check whether current state is the terminal state.
+
         :return: A bool value
         """
         raise NotImplementedError
@@ -138,6 +141,7 @@ class State:
     def get_reward(self):
         """
         Get the reward of current state for player who leads to this state.
+
         :return: A number
         """
         raise NotImplementedError
@@ -145,6 +149,7 @@ class State:
     def rollout(self):
         """
         Get the reward of rollout from current state for player who leads to this state.
+
         :return: A number
         """
         raise NotImplementedError
