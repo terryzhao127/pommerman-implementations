@@ -6,7 +6,7 @@ from q1_schedule import LinearExploration, LinearSchedule
 import pommerman
 
 
-def train(train_from_scratch=False, render=False):
+def train(opponents, train_from_scratch=False, render=False):
     env = pommerman.make('PommeFFACompetition-v0', [])
 
     # Exploration strategy
@@ -19,12 +19,7 @@ def train(train_from_scratch=False, render=False):
 
     # Initialize agents.
     dqn_agent = DQNAgent(env, config, exp_schedule, lr_schedule, True, train_from_scratch=train_from_scratch)
-    agent_list = [
-        dqn_agent,
-        agents.RandomAgent(),
-        agents.RandomAgent(),
-        agents.RandomAgent(),
-    ]
+    agent_list = [dqn_agent] + opponents
     dqn_agent_index = agent_list.index(dqn_agent)
     for id_, agent in enumerate(agent_list):
         agent.init_agent(id_, env.spec._kwargs['game_type'])  # TODO: Don't use protected member.
@@ -72,6 +67,8 @@ def test(match_num=20, render=True):
         agent.init_agent(id_, env.spec._kwargs['game_type'])  # TODO: Don't use protected member.
     env.set_agents(agent_list)
 
+    count = 0
+    win = 0
     for _ in range(match_num):
         state = env.reset()
         done = False
@@ -80,13 +77,19 @@ def test(match_num=20, render=True):
                 env.render()
             actions = env.act(state)
             state, reward, done, info = env.step(actions)
+            if reward[dqn_agent_index] == 1:
+                win += 1
+                print('win at episode %d' % count)
 
             # if reward[dqn_agent_index] == -1 and not done:
             #     # Stop the episode when the testing agent dies.
             #     done = True
+        count += 1
+    print(win / count)
 
     env.close()
 
 
 if __name__ == '__main__':
-    train(train_from_scratch=True)
+    train([agents.SimpleAgent() for _ in range(3)])
+    # test(100, render=False)

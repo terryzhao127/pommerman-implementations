@@ -22,7 +22,7 @@ class config():
     log_freq          = 50
     eval_freq         = 250000
     record_freq       = 250000
-    soft_epsilon      = 0.05
+    soft_epsilon      = 0
 
     # nature paper hyper params
     nsteps_train       = 5000000
@@ -32,7 +32,7 @@ class config():
     gamma              = 1
     learning_freq      = 4
     state_history      = 10
-    skip_frame         = 2
+    skip_frame         = 1
     lr_begin           = 0.00025
     lr_end             = 0.00005
     lr_nsteps          = nsteps_train/2
