@@ -1,7 +1,7 @@
 from pommerman import agents
-from dqn_agent import DQNAgent
-from configs.q5_train_atari_nature import config
-from q1_schedule import LinearExploration, LinearSchedule
+from DQN.dqn_agent import DQNAgent
+from DQN.configs.q5_train_atari_nature import config
+from DQN.q1_schedule import LinearExploration, LinearSchedule
 
 import pommerman
 
@@ -58,7 +58,7 @@ def test(match_num=20, render=True):
     dqn_agent = DQNAgent(env, config, exp_schedule, lr_schedule, False)
     agent_list = [
         dqn_agent,
-        agents.RandomAgent(),
+        agents.SimpleAgent(),
         agents.RandomAgent(),
         agents.RandomAgent(),
     ]
@@ -91,5 +91,9 @@ def test(match_num=20, render=True):
 
 
 if __name__ == '__main__':
-    train([agents.SimpleAgent() for _ in range(3)])
-    # test(100, render=False)
+    train([
+        agents.SimpleAgent(),
+        agents.RandomAgent(),
+        agents.RandomAgent(),
+    ])
+    # test(100, render=True)

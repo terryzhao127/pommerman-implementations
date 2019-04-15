@@ -1,7 +1,7 @@
 import pommerman
 from pommerman import agents
-from mcts_agent import MCTSAgent
 from multiprocessing import Process, Manager
+from MCTS.mcts_agent import MCTSAgent
 
 
 def run(match_num, iteration_limit, mcts_process_num, result_list=None, process_id=None, render=False):
@@ -18,7 +18,7 @@ def run(match_num, iteration_limit, mcts_process_num, result_list=None, process_
     if mcts_process_num == 1:
         mcts_process_num = None
     agent_list = [
-        MCTSAgent([agents.SimpleAgent for _ in range(1)], iteration_limit, process_count=mcts_process_num),
+        MCTSAgent([agents.SimpleAgent for _ in range(3)], iteration_limit, process_count=mcts_process_num),
         agents.SimpleAgent(),
         agents.SimpleAgent(),
         agents.SimpleAgent(),

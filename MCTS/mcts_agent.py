@@ -1,13 +1,13 @@
 import json
 import random
-from collections import Counter
+import pommerman
+from . import mcts
 
+from collections import Counter
 from multiprocessing import Manager, Process
 from pommerman.agents import BaseAgent
 from pommerman.constants import Action
 from ast import literal_eval
-import pommerman
-import mcts
 
 
 class MCTSAgent(BaseAgent):

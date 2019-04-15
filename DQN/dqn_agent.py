@@ -1,8 +1,3 @@
-from pommerman.agents import BaseAgent
-from utils.general import get_logger, Progbar
-from utils.replay_buffer import ReplayBuffer
-from collections import deque
-
 import sys
 import os
 import numpy as np
@@ -10,6 +5,10 @@ import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import matplotlib.pyplot as plt
 
+from pommerman.agents import BaseAgent
+from collections import deque
+from .utils.general import get_logger, Progbar
+from .utils.replay_buffer import ReplayBuffer
 
 # TODO: Refine codes which are copied.
 
@@ -17,6 +16,7 @@ class DQNAgent(BaseAgent):
     non_terminal_reward = 0
 
     def __init__(self, env, config, exp_schedule, lr_schedule, is_training_agent, train_from_scratch=False,
+                 reward_after_somebody_died=False,
                  logger=None):
         """
         Initialize Q Network and env
@@ -29,7 +29,7 @@ class DQNAgent(BaseAgent):
         """
         super(DQNAgent, self).__init__()
 
-        # Variables initialized in __init__
+        # Variables initialized in _build
         self._states = None
         self._actions = None
         self._rewards = None
@@ -76,6 +76,7 @@ class DQNAgent(BaseAgent):
         # Variables initialized in act.
         self._last_action = None
         self._last_idx = None
+        self._enemy_count = None
 
         # Directory for training outputs
         if not os.path.exists(config.output_path):
@@ -91,6 +92,8 @@ class DQNAgent(BaseAgent):
         self._lr_schedule = lr_schedule
         self._is_training_agent = is_training_agent
         self._train_from_scratch = train_from_scratch
+        self._reward_after_somebody_died = reward_after_somebody_died
+        self._total_reward = 0
 
         # Build model.
         self._build()
@@ -100,7 +103,9 @@ class DQNAgent(BaseAgent):
 
         # Assume the graph has been constructed.
         # Create a tf Session and run initializer of variables.
-        self._session = tf.Session()
+        tf_config = tf.ConfigProto()
+        tf_config.gpu_options.allow_growth = True
+        self._session = tf.Session(config=tf_config)
 
         # Tensorboard
         self._add_summary()
@@ -151,8 +156,15 @@ class DQNAgent(BaseAgent):
             return action
 
         if self._has_episode_started:
-            self._train(DQNAgent.non_terminal_reward, done=False)
+            reward = DQNAgent.non_terminal_reward
 
+            if self._reward_after_somebody_died:
+                if len(self._character.enemies) < self._enemy_count:
+                    reward = 1
+
+            self._train(reward, done=False)
+
+        self._enemy_count = len(self._character.enemies)
         self._time_step += 1
 
         # Replay buffer
@@ -185,7 +197,10 @@ class DQNAgent(BaseAgent):
             return
 
         self._train(reward, done=True)
-        self._train_rewards.append(reward)
+        self._train_rewards.append(self._total_reward)
+
+        # Reset total reward.
+        self._total_reward = 0
 
         # TODO: Commented due to lack of evaluate() and record()
         # if (t > self.config.learning_start) and (last_eval > self.config.eval_freq):
@@ -252,6 +267,9 @@ class DQNAgent(BaseAgent):
         elif self._time_step < self._config.learning_start and self._time_step % self._config.log_freq == 0:
             sys.stdout.write("\rPopulating the memory {}/{}...".format(self._time_step, self._config.learning_start))
             sys.stdout.flush()
+
+        # Accumulate reward
+        self._total_reward += reward
 
     def _build(self):
         """

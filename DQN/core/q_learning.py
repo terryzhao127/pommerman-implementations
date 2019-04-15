@@ -4,13 +4,13 @@ import numpy as np
 import logging
 import time
 import sys
+
 from gym import wrappers
 from collections import deque
-
-from utils.general import get_logger, Progbar, export_plot
-from utils.replay_buffer import ReplayBuffer
-from utils.preprocess import greyscale
-from utils.wrappers import PreproWrapper, MaxAndSkipEnv
+from ..utils.general import get_logger, Progbar, export_plot
+from ..utils.replay_buffer import ReplayBuffer
+from ..utils.preprocess import greyscale
+from ..utils.wrappers import PreproWrapper, MaxAndSkipEnv
 
 
 class QN(object):

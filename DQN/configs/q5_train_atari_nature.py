@@ -1,4 +1,4 @@
-class config():
+class config:
     # env config
     render_train     = False
     render_test      = False

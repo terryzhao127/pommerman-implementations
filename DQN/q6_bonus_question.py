@@ -1,16 +1,14 @@
 import gym
-from utils.preprocess import greyscale
-from utils.wrappers import PreproWrapper, MaxAndSkipEnv
-
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 
-from utils.general import get_logger
-from utils.test_env import EnvTest
-from q1_schedule import LinearExploration, LinearSchedule
-from q2_linear import Linear
-
-from configs.q6_bonus_question import config
+from .utils.preprocess import greyscale
+from .utils.wrappers import PreproWrapper, MaxAndSkipEnv
+from .utils.general import get_logger
+from .utils.test_env import EnvTest
+from .q1_schedule import LinearExploration, LinearSchedule
+from .q2_linear import Linear
+from .configs.q6_bonus_question import config
 
 
 class MyDQN(Linear):

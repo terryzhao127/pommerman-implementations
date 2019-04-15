@@ -1,7 +1,8 @@
 import numpy as np
 import gym
+
 from gym import spaces
-from utils.viewer import SimpleImageViewer
+from .viewer import SimpleImageViewer
 from collections import deque
 
 

@@ -1,12 +1,12 @@
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import numpy as np
-from utils.general import get_logger
-from utils.test_env import EnvTest
-from core.deep_q_learning import DQN
-from q1_schedule import LinearExploration, LinearSchedule
 
-from configs.q2_linear import config
+from .utils.general import get_logger
+from .utils.test_env import EnvTest
+from .core.deep_q_learning import DQN
+from .q1_schedule import LinearExploration, LinearSchedule
+from .configs.q2_linear import config
 
 
 class Linear(DQN):
@@ -248,14 +248,14 @@ class Linear(DQN):
 
         ##############################################################
         ######################## END YOUR CODE #######################
-    
+
 
 
 if __name__ == '__main__':
     env = EnvTest((5, 5, 1))
 
     # exploration strategy
-    exp_schedule = LinearExploration(env, config.eps_begin, 
+    exp_schedule = LinearExploration(env, config.eps_begin,
             config.eps_end, config.eps_nsteps)
 
     # learning rate schedule
