@@ -150,7 +150,7 @@ class DQNAgent(BaseAgent):
 
             self._last_idx = self._train_replay_buffer.store_frame(state)
             q_input = self._train_replay_buffer.encode_recent_observation()
-            action = self._get_best_action(q_input)[0]
+            action = self._get_action(q_input)
             self._last_action = action
 
             return action
