@@ -13,8 +13,8 @@ def main():
         agents.RandomAgent(),
     ]
 
-    # train(opponents)
-    _test(opponents, 100, render=True)
+    # _train(opponents)
+    _test(opponents, 100, render=False)
 
 
 def _train(opponents, train_from_scratch=False, render=False):
@@ -29,7 +29,8 @@ def _train(opponents, train_from_scratch=False, render=False):
                                  config.lr_nsteps)
 
     # Initialize agents.
-    dqn_agent, dqn_agent_index = _init_agents(env, exp_schedule, lr_schedule, opponents, train_from_scratch)
+    dqn_agent = DQNAgent(env, config, exp_schedule, lr_schedule, True, train_from_scratch=train_from_scratch)
+    dqn_agent_index = _init_agents(env, exp_schedule, lr_schedule, opponents, dqn_agent)
 
     t = 1
     while t < config.nsteps_train:
@@ -62,7 +63,8 @@ def _test(opponents, match_num=20, render=True):
                                  config.lr_nsteps)
 
     # Initialize agents.
-    dqn_agent, dqn_agent_index = _init_agents(env, exp_schedule, lr_schedule, opponents, False)
+    dqn_agent = DQNAgent(env, config, exp_schedule, lr_schedule, False)
+    dqn_agent_index = _init_agents(env, exp_schedule, lr_schedule, opponents, dqn_agent)
 
     count = 0
     win = 0
@@ -89,15 +91,14 @@ def _test(opponents, match_num=20, render=True):
     env.close()
 
 
-def _init_agents(env, exp_schedule, lr_schedule, opponents, train_from_scratch):
-    dqn_agent = DQNAgent(env, config, exp_schedule, lr_schedule, True, train_from_scratch=train_from_scratch)
+def _init_agents(env, exp_schedule, lr_schedule, opponents, dqn_agent):
     agent_list = [dqn_agent] + opponents
     index = agent_list.index(dqn_agent)
     for id_, agent in enumerate(agent_list):
         agent.init_agent(id_, env.spec._kwargs['game_type'])  # TODO: Don't use protected member.
     env.set_agents(agent_list)
 
-    return dqn_agent, index
+    return index
 
 
 if __name__ == '__main__':
