@@ -17,6 +17,7 @@ class MCTS:
     def __init__(
             self,
             init_state: State,
+            temp: float,
             time_limit: float = None,
             iteration_limit: int = None,
             c_puct: float = _default_c_puct
@@ -46,6 +47,7 @@ class MCTS:
 
         # noinspection PyTypeChecker
         self._root: _Node = None
+        self._temp: float = temp
         self._init_state: State = init_state
         self._c_puct: float = c_puct
 
@@ -61,7 +63,7 @@ class MCTS:
             for i in range(self._iteration_limit):
                 self._execute()
 
-        return MCTS._get_pr_tuples(self._root, self._c_puct)
+        return MCTS._get_pr_tuples(self._root, self._temp)
 
     def _execute(self) -> None:
         node = self._root
@@ -97,23 +99,25 @@ class MCTS:
         node.is_expanded = True
 
     @staticmethod
-    def _get_action_values_for_single_player(player_index):
-        pass
-
-    @staticmethod
     def _get_pr_tuples(
             node: _Node,
-            c_puct: float,
-            temp=1e-3
+            temp: float
     ) -> List[Tuple[List[State.ActionType], Type[np.ndarray]]]:
         result = []
         for player_index in range(2):
-            action_values = MCTS._get_action_values(node, c_puct, player_index)
             actions = node.state.get_possible_actions_for_single_player(player_index)
-            values = [x[1] for x in sorted(action_values.items(), key=lambda x: x[0].value)]
-
-            temp = 0.1
-            result.append((actions, MCTS._softmax(1.0 / temp * np.log(np.array(values)))))
+            action_num_visits: Dict[State.ActionType, int] = {}
+            for action in actions:
+                num_visits = 0
+                for action_tuple, child in node.children.items():
+                    if action_tuple[player_index] == action:
+                        num_visits += child.records[player_index].num_visits
+                action_num_visits[action] = num_visits
+            # action_values = MCTS._get_action_values(node, c_puct, player_index)
+            # actions = node.state.get_possible_actions_for_single_player(player_index)
+            result_num_visits = \
+                [x[1] for x in sorted(action_num_visits.items(), key=lambda x: x[0].value)]
+            result.append((actions, MCTS._softmax(1.0 / temp * np.log(np.array(result_num_visits) + 1e-10))))
 
         return result
 

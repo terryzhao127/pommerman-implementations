@@ -7,22 +7,22 @@ import numpy as np
 
 
 class Evaluator:
-    def __init__(self, net_1, net_2, num_games, num_simulations):
+    def __init__(self, best_net, new_net, num_games, num_simulations):
         """
         Initialize the evaluation component
-        :param net_1: Network 1
-        :param net_2: Network 2
+        :param best_net: Network 1
+        :param new_net: Network 2
         :param num_games: Number of games played in each evaluation
         :param num_simulations: Number of MCTS simulations to select each move
         """
-        self._net_1 = net_1
-        self._net_2 = net_2
+        self._net_1 = best_net
+        self._net_2 = new_net
         self._num_games = num_games
         self._env = pommerman.make(
             settings.game_config_id,
             [
-                ZeroAgent(net_1, num_simulations=num_simulations, is_self_play=False),
-                ZeroAgent(net_2, num_simulations=num_simulations, is_self_play=False),
+                ZeroAgent(best_net, num_simulations=num_simulations, is_self_play=False),
+                ZeroAgent(new_net, num_simulations=num_simulations, is_self_play=False),
             ]
         )
 
@@ -36,7 +36,9 @@ class Evaluator:
             state = self._env.reset()
             done = False
             reward = None
+            print('[Evaluation] Game %d of evaluation started.' % (i + 1))
             while not done:
+                # print('[Evaluation] Step %d' % self._env._step_count)
                 actions = self._env.act(state)
                 state, reward, done, info = self._env.step(actions)
             if reward[0] == settings.win_reward and reward[1] == settings.lose_reward:
@@ -46,4 +48,6 @@ class Evaluator:
 
             print('[Evaluation] Game %d of evaluation completed.' % (i + 1))
 
-        return win_count / win_count.sum()
+        result = win_count / win_count.sum()
+
+        return result[1] - result[0] > 0.55

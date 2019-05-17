@@ -16,7 +16,7 @@ import json
 
 
 class ZeroAgent(SimAgent):
-    def __init__(self, net, num_simulations, is_self_play, num_processes=None):
+    def __init__(self, net, num_simulations, is_self_play, num_exploration_steps, num_processes=None):
         """
         Initialize a MCTSAgent.
 
@@ -28,6 +28,7 @@ class ZeroAgent(SimAgent):
         self._iteration_limit = num_simulations
         self._num_processes = num_processes
         self._is_self_play = is_self_play
+        self._num_exploration_steps = num_exploration_steps
 
         self._training_states_self = []
         self._action_prs_self = []
@@ -80,7 +81,11 @@ class ZeroAgent(SimAgent):
 
         selected_actions = None
         selected_actions_prs = None
-        searcher = MCTS(env_state, iteration_limit=self._iteration_limit)
+        if self._is_self_play and self._step_count <= self._num_exploration_steps:
+            temp = 1.0
+        else:
+            temp = 1e-3
+        searcher = MCTS(env_state, temp=temp, iteration_limit=self._iteration_limit)
         for i, (actions, action_prs) in enumerate(searcher.search()):
             if i == self._character.agent_id:
                 self._training_states_self += self._get_training_states(i)

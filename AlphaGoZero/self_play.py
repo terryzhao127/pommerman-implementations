@@ -7,7 +7,7 @@ import settings
 
 
 class SelfPlay:
-    def __init__(self, best_net, num_games, num_simulations):
+    def __init__(self, best_net, num_games, num_simulations, num_exploration_steps):
         """
         Initialize the self-play component
         :param best_net: Current best policy-value network
@@ -16,8 +16,10 @@ class SelfPlay:
         """
         self._best_net = best_net
         self._num_games = num_games
-        self._zero_agent_1 = ZeroAgent(best_net, num_simulations, is_self_play=True)
-        self._zero_agent_2 = ZeroAgent(best_net, num_simulations, is_self_play=True)
+        self._zero_agent_1 = ZeroAgent(best_net, num_simulations, is_self_play=True,
+                                       num_exploration_steps=num_exploration_steps)
+        self._zero_agent_2 = ZeroAgent(best_net, num_simulations, is_self_play=True,
+                                       num_exploration_steps=num_exploration_steps)
         self._env = pommerman.make(
             settings.game_config_id,
             [self._zero_agent_1, self._zero_agent_2]
@@ -36,10 +38,14 @@ class SelfPlay:
             state = self._env.reset()
             done = False
             final_reward = None
+            print('[Self Play] Game %d of self-play started.' % (i + 1))
             while not done:
+                # print('[Self Play] Step %d' % self._env._step_count)
+
                 actions = self._env.act(state)
                 state, reward, done, info = self._env.step([action.value for action in actions])
                 final_reward = reward
+
             data_1 = self._zero_agent_1.get_training_data()
             data_2 = self._zero_agent_2.get_training_data()
 
@@ -50,4 +56,4 @@ class SelfPlay:
 
             print('[Self Play] Game %d of self-play completed.' % (i + 1))
 
-        return training_states, training_prs, training_rewards
+        return list(zip(training_states, training_prs, training_rewards))[:]

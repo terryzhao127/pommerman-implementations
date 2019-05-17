@@ -5,46 +5,79 @@ import tensorflow as tf
 import settings
 import os
 import numpy as np
+import random
 
 
 class PolicyValueNet:
     default_model_path = './models/'
 
-    def __init__(self, mini_batch_size, trained_model=None) -> None:
+    def __init__(self,
+                 mini_batch_size,
+                 num_epochs,
+                 learning_rate,
+                 lr_multiplier,
+                 kl_targ,
+                 trained_model=None) -> None:
         # TODO: Change the number of feature maps
         self._num_feature_maps = 6
         self._l2_penalty_beta = 1e-4
         self._possible_actions = [a for a in constants.Action]
+        self._mini_batch_size = mini_batch_size
+        self._num_epochs = num_epochs
+        self._learning_rate = learning_rate
+        self._lr_multiplier = lr_multiplier
+        self._kl_targ = kl_targ
 
         # Build the network
         self._build()
 
         if trained_model is not None:
-            self.load_model()
+            self.load_model(filename=trained_model)
 
-    def optimize(self, data):
-        # TODO: Process states
-        state_batch, mcts_prs, winner_batch = data
-        # winner_batch = []
-        # state_batch = []
-        # mcts_prs = []
-        learning_rate = None
+    def optimize(self, self_play_data):
+        mini_batch = random.sample(self_play_data, self._mini_batch_size)
 
-        winner_batch = np.reshape(winner_batch, (-1, 1))
-        loss, entropy, _ = self._sess.run(
-            [self._loss, self._entropy, self._optimizer],
-            feed_dict={self._input_states: state_batch,
-                       self._mcts_prs: mcts_prs,
-                       self._value: winner_batch,
-                       self._learning_rate: 0.01}
-        )
-        return loss, entropy
+        state_batch = [data[0] for data in mini_batch]
+        mcts_prs_batch = [data[1] for data in mini_batch]
+        winner_batch = [data[2] for data in mini_batch]
 
-    def predict(self, state):
-        # TODO: Process state
+        old_prs, old_v = self.predict(state_batch)
+        old_prs = [x[1] for x in old_prs]
+
+        kl = None
+        for i in range(self._num_epochs):
+            winner_batch = np.reshape(winner_batch, (-1, 1))
+            loss, entropy, _ = self._sess.run(
+                [self._loss, self._entropy, self._optimizer],
+                feed_dict={
+                    self._input_states: state_batch,
+                    self._mcts_prs: mcts_prs_batch,
+                    self._value: winner_batch,
+                    self._learning_rate: self._learning_rate * self._lr_multiplier
+                }
+            )
+
+            new_prs, new_v = self.predict(state_batch)
+            new_prs = [x[1] for x in new_prs]
+            kl = np.mean(np.sum(
+                old_prs * (np.log(old_prs + 1e-10) - np.log(new_prs + 1e-10)),
+                axis=1)
+            )
+            print('Epoch %d: ' % (i + 1), ', kl: %f' % kl, 'loss: %f' % loss, 'entropy: %f' % entropy)
+            if kl > self._kl_targ * 4:
+                # Stop early if D_KL diverges badly
+                break
+
+        # Adaptively adjust the learning rate
+        if kl > self._kl_targ * 2 and self._lr_multiplier > 0.1:
+            self._lr_multiplier /= 1.5
+        elif kl < self._kl_targ / 2 and self._lr_multiplier < 10:
+            self._lr_multiplier *= 1.5
+
+    def predict(self, states):
         log_action_prs, value = self._sess.run(
             [self._action_fc, self._evaluation_fc_2],
-            feed_dict={self._input_states: state}
+            feed_dict={self._input_states: states}
         )
         action_prs = list(zip(self._possible_actions, np.exp(log_action_prs[0])))
 
@@ -168,13 +201,13 @@ class PolicyValueNet:
         # For saving model
         self._saver = tf.train.Saver()
 
-    def load_model(self, path=default_model_path):
-        self._saver.restore(self._sess, path)
+    def load_model(self, filename, path=default_model_path):
+        self._saver.restore(self._sess, path + filename)
 
-    def save_model(self):
-        if not os.path.exists(PolicyValueNet.default_model_path):
-            os.makedirs(PolicyValueNet.default_model_path)
-        self._saver.save(self._sess, PolicyValueNet.default_model_path)
+    def save_model(self, filename, path=default_model_path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self._saver.save(self._sess, path + filename)
 
 
 def _process_data():
