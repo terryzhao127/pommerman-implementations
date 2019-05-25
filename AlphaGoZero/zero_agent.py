@@ -1,6 +1,4 @@
 from __future__ import annotations
-from multiprocessing import Manager, Process
-from collections import Counter
 from typing import List, Tuple
 
 from pommerman.agents import BaseAgent
@@ -9,6 +7,7 @@ from ast import literal_eval
 from sim_agent import SimAgent
 from mcts import State, MCTS
 
+import os
 import pommerman
 import settings
 import numpy as np
@@ -65,6 +64,7 @@ class ZeroAgent(SimAgent):
                 self._training_states_other += self._get_training_states(i)
                 self._action_prs_other.append(action_prs)
 
+        np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))
         action = np.random.choice(selected_actions, p=selected_actions_prs)
 
         return action
@@ -98,10 +98,6 @@ class ZeroAgent(SimAgent):
             ])
         )
         return states
-
-    def _process_state(self, obs):
-
-        pass
 
     def init_agent(self, id_, game_type):
         super(ZeroAgent, self).init_agent(id_, game_type)

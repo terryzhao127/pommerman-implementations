@@ -28,8 +28,6 @@ class SelfPlay:
     def start(self):
         """Start self-play and generate data"""
         # TODO: Formalize logs
-        print('Self-play starts...')
-
         training_states = []
         training_prs = []
         training_rewards = []
@@ -38,7 +36,6 @@ class SelfPlay:
             state = self._env.reset()
             done = False
             final_reward = None
-            print('[Self Play] Game %d of self-play started.' % (i + 1))
             while not done:
                 # print('[Self Play] Step %d' % self._env._step_count)
 
@@ -54,6 +51,5 @@ class SelfPlay:
             training_prs += prs
             training_rewards += [final_reward[0]] * (len(prs) // 2) + [final_reward[1]] * (len(prs) // 2)
 
-            print('[Self Play] Game %d of self-play completed.' % (i + 1))
 
         return list(zip(training_states, training_prs, training_rewards))[:]

@@ -28,15 +28,12 @@ class Evaluator:
 
     def start(self):
         """Start evaluation and return win ratios of two players"""
-        print('Evaluation starts...')
-
         win_count = np.zeros(2)
         for i in range(self._num_games):
 
             state = self._env.reset()
             done = False
             reward = None
-            print('[Evaluation] Game %d of evaluation started.' % (i + 1))
             while not done:
                 # print('[Evaluation] Step %d' % self._env._step_count)
                 actions = self._env.act(state)
@@ -46,9 +43,5 @@ class Evaluator:
             elif reward[1] == settings.win_reward and reward[0] == settings.lose_reward:
                 win_count[1] += 1
 
-            print('[Evaluation] Game %d of evaluation completed.' % (i + 1))
+        return win_count
 
-        result = win_count / win_count.sum()
-        print('[Evaluation] win ratios:', result)
-
-        return result[1] > 0.55
