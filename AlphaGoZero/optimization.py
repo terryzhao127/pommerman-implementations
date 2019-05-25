@@ -17,7 +17,7 @@ class Net:
 
     def __init__(self, trained_model=None) -> None:
         # TODO: Change the number of feature maps
-        self._num_feature_maps = 6
+        self._num_feature_maps = 7
         self._l2_penalty_beta = 1e-4
         self._possible_actions = [a for a in constants.Action]
 

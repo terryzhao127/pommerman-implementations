@@ -49,7 +49,10 @@ class SelfPlay:
             training_states += data_1[0][0] + data_2[1][0] + data_1[1][0] + data_2[0][0]
             prs = data_1[0][1] + data_2[1][1] + data_1[1][1] + data_2[0][1]
             training_prs += prs
-            training_rewards += [final_reward[0]] * (len(prs) // 2) + [final_reward[1]] * (len(prs) // 2)
 
+            if final_reward[0] == 0 and final_reward[1] == 0:
+                final_reward[0] = -1
+                final_reward[1] = -1
+            training_rewards += [final_reward[0]] * (len(prs) // 2) + [final_reward[1]] * (len(prs) // 2)
 
         return list(zip(training_states, training_prs, training_rewards))[:]

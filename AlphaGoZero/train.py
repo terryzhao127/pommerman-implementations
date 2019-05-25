@@ -12,10 +12,10 @@ new_net_filename = 'new.model'
 num_pipeline_iterations = 1500
 
 # Self Play
-self_play_num_simulations = 1
+self_play_num_simulations = 5
 self_play_data_size = 10
-self_play_exploration_steps = 15
-self_play_process_count = 14
+self_play_exploration_steps = 10
+self_play_process_count = 1
 
 # Optimization
 optimization_mini_batch_size = 4
@@ -23,14 +23,14 @@ optimization_freq = self_play_data_size // 10
 
 # Evaluation
 evaluation_freq = 1
-evaluation_num_simulations = 100
-evaluation_num_games = 1
+evaluation_num_simulations = 1
+evaluation_num_games = 20
 evaluation_max_process_count = 10
 
 
 def main():
     # Create a file for new model
-    p = Process(target=create_new_best_model)
+    p = Process(target=create_new_models)
     p.start()
     p.join()
 
@@ -103,7 +103,7 @@ def main():
                 print('[Evaluation] No new best net.')
 
 
-def create_new_best_model():
+def create_new_models():
     best_net = TrainingNet(
         mini_batch_size=optimization_mini_batch_size,
         num_epochs=5,
@@ -111,7 +111,15 @@ def create_new_best_model():
         lr_multiplier=1.0,
         kl_targ=0.02
     )
+    new_net = TrainingNet(
+        mini_batch_size=optimization_mini_batch_size,
+        num_epochs=5,
+        learning_rate=2e-3,
+        lr_multiplier=1.0,
+        kl_targ=0.02
+    )
     best_net.save_model(best_net_filename)
+    new_net.save_model(new_net_filename)
 
 
 def optimize(data, training_params, op_l):
@@ -181,7 +189,7 @@ def evaluate_net(num_games, num_simulations):
 
 def generate_self_play_data(num_simulations, num_exploration_steps, process_count):
     def run(l_):
-        best_net = Net(trained_model=new_net_filename)
+        best_net = Net(trained_model=best_net_filename)
         self_play_component = SelfPlay(best_net, num_games=1, num_simulations=num_simulations,
                                        num_exploration_steps=num_exploration_steps)
         _new_data = self_play_component.start()

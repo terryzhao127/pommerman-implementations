@@ -20,7 +20,8 @@ class MCTS:
             temp: float,
             time_limit: float = None,
             iteration_limit: int = None,
-            c_puct: float = _default_c_puct
+            c_puct: float = _default_c_puct,
+            is_self_play: bool = True
     ) -> None:
         if time_limit is not None:
             if iteration_limit is not None:
@@ -50,6 +51,7 @@ class MCTS:
         self._temp: float = temp
         self._init_state: State = init_state
         self._c_puct: float = c_puct
+        self._is_self_play = is_self_play
 
     def search(self) -> List[Tuple[List[State.ActionType], Type[np.ndarray]]]:
         # noinspection PyTypeChecker
@@ -71,7 +73,10 @@ class MCTS:
             if node.is_expanded:
                 node = self._get_best_child_node(node, self._c_puct)
             else:
-                action_prs, values = node.state.policy_value()
+                if node is self._root and self._is_self_play:
+                    action_prs, values = node.state.policy_value(noise=True)
+                else:
+                    action_prs, values = node.state.policy_value(noise=False)
                 self._expand(node, action_prs)
                 self._backup(node, values)
                 return
@@ -249,7 +254,7 @@ class State(ABC):
         pass
 
     @abstractmethod
-    def policy_value(self) -> Tuple[List[Tuple[ActionTuple, Tuple[float]]], RewardTuple]:
+    def policy_value(self, noise=False) -> Tuple[List[Tuple[ActionTuple, Tuple[float]]], RewardTuple]:
         """
         Get probabilities of actions and value of current state for players
 

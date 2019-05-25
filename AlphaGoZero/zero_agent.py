@@ -52,7 +52,7 @@ class ZeroAgent(SimAgent):
             temp = 1.0
         else:
             temp = 1e-3
-        searcher = MCTS(env_state, temp=temp, iteration_limit=self._iteration_limit)
+        searcher = MCTS(env_state, temp=temp, iteration_limit=self._iteration_limit, is_self_play=self._is_self_play)
         for i, (actions, action_prs) in enumerate(searcher.search()):
             if i == self._character.agent_id:
                 self._training_states_self += self._get_training_states(i)
@@ -91,10 +91,21 @@ class ZeroAgent(SimAgent):
             blast_strength[x][y] = agent.blast_strength
             can_kick[x][y] = 1 if agent.can_kick else 0
 
+        # Step count
+        if self._step_count <= 200:
+            step_count = 0
+        elif 200 < self._step_count <= 400:
+            step_count = 1
+        elif 400 < self._step_count <= 600:
+            step_count = 2
+        else:
+            step_count = 3
+        step_count = np.full(board_shape, step_count)
+
         states.append(
             np.concatenate([
                 board[None], bomb_blast_strength[None], bomb_life[None], ammo[None],
-                blast_strength[None], can_kick[None]
+                blast_strength[None], can_kick[None], step_count[None]
             ])
         )
         return states
@@ -135,13 +146,21 @@ class _EnvState(State):
         self._possible_actions = [(x.value, y.value) for x in Action for y in Action]
         self._possible_actions_for_single_player = [x for x in Action]
 
-    def policy_value(self) -> Tuple[List[Tuple[State.ActionTuple, Tuple[float]]], State.RewardTuple]:
+    def policy_value(self, noise=False) -> Tuple[List[Tuple[State.ActionTuple, Tuple[float]]], State.RewardTuple]:
         action_prs_for_players = []
         values = []
         for player_index in range(2):
             action_prs, value = self._net.predict(self._process_state(self._state, player_index))
-            action_prs_for_players.append(action_prs)
             values.append(value[0, 0])
+
+            # Add noise
+            np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))
+            prs_raw = np.array([action_pr[1] for action_pr in action_prs])
+            prs_processed = prs_raw * 0.75 + np.random.dirichlet(0.3 * np.ones(len(prs_raw)))
+            for i in range(len(action_prs)):
+                action_prs[i] = action_prs[i][0], prs_processed[i]
+
+            action_prs_for_players.append(action_prs)
         results = []
         for action_tuple_1 in action_prs_for_players[0]:
             for action_tuple_2 in action_prs_for_players[1]:
@@ -178,7 +197,8 @@ class _EnvState(State):
         self._env.set_json_info()
         self._env._intended_actions = [i for i in literal_eval(self._state['intended_actions'])]
 
-    def _process_state(self, raw_sim_state, player_index):
+    @staticmethod
+    def _process_state(raw_sim_state, player_index):
         raw_sim_state = raw_sim_state.copy()
         for key, value in raw_sim_state.items():
             raw_sim_state[key] = json.loads(value)
@@ -207,13 +227,25 @@ class _EnvState(State):
             blast_strength[x][y] = agent['blast_strength']
             can_kick[x][y] = 1 if agent['can_kick'] else 0
 
+        # Step count
+        if raw_sim_state['step_count'] <= 200:
+            step_count = 0
+        elif 200 < raw_sim_state['step_count'] <= 400:
+            step_count = 1
+        elif 400 < raw_sim_state['step_count'] <= 600:
+            step_count = 2
+        else:
+            step_count = 3
+        step_count = np.full(board_shape, step_count)
+
         return np.concatenate([
             board[None],
             bomb_blast_strength[None],
             bomb_life[None],
             ammo[None],
             blast_strength[None],
-            can_kick[None]
+            can_kick[None],
+            step_count[None]
         ])[None]
 
 
