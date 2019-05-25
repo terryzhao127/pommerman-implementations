@@ -45,38 +45,6 @@ class ZeroAgent(SimAgent):
     def _act(self, obs, action_space):
         state = self._create_sim_state(obs)
 
-        # if self._num_processes:
-        #     # Multiprocessing
-        #
-        #     def _mcts_search(_state, _agent_id, _simulation_env, _iteration_limit, _shared_list):
-        #         _env_state = _EnvState(_state, _agent_id, _simulation_env)
-        #         _searcher = MCTS(_env_state, iteration_limit=_iteration_limit)
-        #         _shared_list.append(_searcher.search())
-        #
-        #     def get_most_frequent(l):
-        #         count = Counter(l)
-        #         return count.most_common(1)[0][0]
-        #
-        #     with Manager() as manager:
-        #         shared_list = manager.list()
-        #         processes = []
-        #
-        #         for _ in range(self._num_processes):
-        #             env_copy = self._make_env_copy()
-        #             processes.append(Process(
-        #                 target=_mcts_search,
-        #                 args=(state, self._agent_id, env_copy, self._iteration_limit, shared_list)
-        #             ))
-        #
-        #         for p in processes:
-        #             p.start()
-        #
-        #         for p in processes:
-        #             p.join()
-        #
-        #         action = get_most_frequent(shared_list)
-        # else:
-
         env_state = _EnvState(state, self._character.agent_id, self._sim_env, self._net)
 
         selected_actions = None
@@ -97,16 +65,7 @@ class ZeroAgent(SimAgent):
                 self._training_states_other += self._get_training_states(i)
                 self._action_prs_other.append(action_prs)
 
-        if self._is_self_play:
-            # noinspection PyTypeChecker
-            action = np.random.choice(
-                selected_actions,
-                p=0.75 * selected_actions_prs + 0.25 * np.random.dirichlet(0.3 * np.ones(len(selected_actions_prs)))
-            )
-            # TODO: need validating
-
-        else:
-            action = np.random.choice(selected_actions, p=selected_actions_prs)
+        action = np.random.choice(selected_actions, p=selected_actions_prs)
 
         return action
 

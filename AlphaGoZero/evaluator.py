@@ -21,8 +21,8 @@ class Evaluator:
         self._env = pommerman.make(
             settings.game_config_id,
             [
-                ZeroAgent(best_net, num_simulations=num_simulations, is_self_play=False),
-                ZeroAgent(new_net, num_simulations=num_simulations, is_self_play=False),
+                ZeroAgent(best_net, num_simulations=num_simulations, is_self_play=False, num_exploration_steps=0),
+                ZeroAgent(new_net, num_simulations=num_simulations, is_self_play=False, num_exploration_steps=0),
             ]
         )
 
@@ -40,7 +40,7 @@ class Evaluator:
             while not done:
                 # print('[Evaluation] Step %d' % self._env._step_count)
                 actions = self._env.act(state)
-                state, reward, done, info = self._env.step(actions)
+                state, reward, done, info = self._env.step([a.value for a in actions])
             if reward[0] == settings.win_reward and reward[1] == settings.lose_reward:
                 win_count[0] += 1
             elif reward[1] == settings.win_reward and reward[0] == settings.lose_reward:
@@ -49,5 +49,6 @@ class Evaluator:
             print('[Evaluation] Game %d of evaluation completed.' % (i + 1))
 
         result = win_count / win_count.sum()
+        print('[Evaluation] win ratios:', result)
 
-        return result[1] - result[0] > 0.55
+        return result[1] > 0.55

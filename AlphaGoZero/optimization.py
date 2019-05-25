@@ -1,11 +1,15 @@
 from __future__ import annotations
 from pommerman import constants
+from tensorflow import logging
 
 import tensorflow as tf
 import settings
 import os
 import numpy as np
 import random
+
+logging.set_verbosity(logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 class PolicyValueNet:
@@ -24,7 +28,7 @@ class PolicyValueNet:
         self._possible_actions = [a for a in constants.Action]
         self._mini_batch_size = mini_batch_size
         self._num_epochs = num_epochs
-        self._learning_rate = learning_rate
+        self._lr_input = learning_rate
         self._lr_multiplier = lr_multiplier
         self._kl_targ = kl_targ
 
@@ -35,44 +39,57 @@ class PolicyValueNet:
             self.load_model(filename=trained_model)
 
     def optimize(self, self_play_data):
-        mini_batch = random.sample(self_play_data, self._mini_batch_size)
-
-        state_batch = [data[0] for data in mini_batch]
-        mcts_prs_batch = [data[1] for data in mini_batch]
-        winner_batch = [data[2] for data in mini_batch]
-
-        old_prs, old_v = self.predict(state_batch)
-        old_prs = [x[1] for x in old_prs]
-
-        kl = None
         for i in range(self._num_epochs):
-            winner_batch = np.reshape(winner_batch, (-1, 1))
-            loss, entropy, _ = self._sess.run(
-                [self._loss, self._entropy, self._optimizer],
-                feed_dict={
-                    self._input_states: state_batch,
-                    self._mcts_prs: mcts_prs_batch,
-                    self._value: winner_batch,
-                    self._learning_rate: self._learning_rate * self._lr_multiplier
-                }
-            )
+            kl = 0
+            loss = 0
+            entropy = 0
 
-            new_prs, new_v = self.predict(state_batch)
-            new_prs = [x[1] for x in new_prs]
-            kl = np.mean(np.sum(
-                old_prs * (np.log(old_prs + 1e-10) - np.log(new_prs + 1e-10)),
-                axis=1)
-            )
-            print('Epoch %d: ' % (i + 1), ', kl: %f' % kl, 'loss: %f' % loss, 'entropy: %f' % entropy)
-            if kl > self._kl_targ * 4:
-                # Stop early if D_KL diverges badly
-                break
+            for _ in range(len(self_play_data) // self._mini_batch_size):
 
-        # Adaptively adjust the learning rate
-        if kl > self._kl_targ * 2 and self._lr_multiplier > 0.1:
-            self._lr_multiplier /= 1.5
-        elif kl < self._kl_targ / 2 and self._lr_multiplier < 10:
-            self._lr_multiplier *= 1.5
+                mini_batch = random.sample(self_play_data, self._mini_batch_size)
+
+                state_batch = [data[0] for data in mini_batch]
+                mcts_prs_batch = [data[1] for data in mini_batch]
+                winner_batch = [data[2] for data in mini_batch]
+
+                old_prs, old_v = self.predict(state_batch)
+                processed_old_prs = []
+                for prs in old_prs:
+                    processed_old_prs.append(prs[1])
+                processed_old_prs = np.asarray(processed_old_prs)
+
+                winner_batch = np.reshape(winner_batch, (-1, 1))
+                loss, entropy, _ = self._sess.run(
+                    [self._loss, self._entropy, self._optimizer],
+                    feed_dict={
+                        self._input_states: state_batch,
+                        self._mcts_prs: mcts_prs_batch,
+                        self._value: winner_batch,
+                        self._learning_rate: self._lr_input * self._lr_multiplier
+                    }
+                )
+
+                new_prs, new_v = self.predict(state_batch)
+
+                processed_new_prs = []
+                for prs in new_prs:
+                    processed_new_prs.append(prs[1])
+                processed_new_prs = np.asarray(processed_new_prs)
+
+                kl = np.mean(np.sum(
+                    (processed_old_prs * (np.log(processed_old_prs + 1e-10) - np.log(processed_new_prs + 1e-10)))[None],
+                    axis=1)
+                )
+                if kl > self._kl_targ * 4:
+                    print('[Optimization] Epoch %d break due to D_KL divergence' % (i + 1))
+                    # Stop early if D_KL diverges badly
+                    break
+            print('[Optimization] Epoch %d -' % (i + 1), 'kl: %f' % kl, 'loss: %f' % loss, 'entropy: %f' % entropy)
+            # Adaptively adjust the learning rate
+            if kl > self._kl_targ * 2 and self._lr_multiplier > 0.1:
+                self._lr_multiplier /= 1.5
+            elif kl < self._kl_targ / 2 and self._lr_multiplier < 10:
+                self._lr_multiplier *= 1.5
 
     def predict(self, states):
         log_action_prs, value = self._sess.run(
@@ -208,8 +225,3 @@ class PolicyValueNet:
         if not os.path.exists(path):
             os.makedirs(path)
         self._saver.save(self._sess, path + filename)
-
-
-def _process_data():
-    """Process generated self-play data"""
-    pass
