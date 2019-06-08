@@ -1,0 +1,3 @@
+[submodule "pommerman"]
+	path = pommerman
+	url = https://github.com/MultiAgentLearning/playground.git
