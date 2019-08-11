@@ -1,7 +1,7 @@
 import json
 import random
 import pommerman
-from . import mcts
+import mcts
 
 from collections import Counter
 from multiprocessing import Manager, Process
