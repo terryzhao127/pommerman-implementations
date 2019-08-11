@@ -2,11 +2,11 @@ import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import numpy as np
 
-from .utils.general import get_logger
-from .utils.test_env import EnvTest
-from .core.deep_q_learning import DQN
-from .q1_schedule import LinearExploration, LinearSchedule
-from .configs.q2_linear import config
+from utils.general import get_logger
+from utils.test_env import EnvTest
+from core.deep_q_learning import DQN
+from q1_schedule import LinearExploration, LinearSchedule
+from configs.q2_linear import config
 
 
 class Linear(DQN):

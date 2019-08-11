@@ -1,9 +1,9 @@
 import pommerman
 
 from pommerman import agents
-from DQN.dqn_agent import DQNAgent
-from DQN.configs.q5_train_atari_nature import config
-from DQN.q1_schedule import LinearExploration, LinearSchedule
+from dqn_agent import DQNAgent
+from configs.q5_train_atari_nature import config
+from q1_schedule import LinearExploration, LinearSchedule
 
 
 def main():
@@ -13,7 +13,7 @@ def main():
         agents.RandomAgent(),
     ]
 
-    # _train(opponents)
+    _train(opponents, train_from_scratch=True)
     _test(opponents, 100, render=False)
 
 
