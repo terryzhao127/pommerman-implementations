@@ -1,3 +1,6 @@
 [submodule "pommerman"]
 	path = pommerman
 	url = https://github.com/MultiAgentLearning/playground.git
+[submodule "AlphaGoZero/sim_agent"]
+	path = AlphaGoZero/sim_agent
+	url = git@github.com:guikarist/sim-agent.git

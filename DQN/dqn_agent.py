@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 from pommerman.agents import BaseAgent
 from collections import deque
-from .utils.general import get_logger, Progbar
-from .utils.replay_buffer import ReplayBuffer
+from utils.general import get_logger, Progbar
+from utils.replay_buffer import ReplayBuffer
 
 # TODO: Refine codes which are copied.
 
