@@ -5,5 +5,6 @@ git clone --recurse-submodules git@github.com:guikarist/pommerman-implementation
 
 cd pommerman-implementations
 
+# Only works on Linux
 conda env create -f env.yml
 ```
